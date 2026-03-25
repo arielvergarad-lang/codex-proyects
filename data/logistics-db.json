@@ -1,0 +1,176 @@
+{
+  "config": {
+    "scenario": "urban",
+    "traffic": 48,
+    "weather": 22,
+    "route_mode": "auto",
+    "manual_route": []
+  },
+  "depot": {
+    "id": "depot",
+    "code": "DEPOT",
+    "customer": "Bodega Central Test",
+    "x": 12,
+    "y": 72,
+    "lat": -37.08,
+    "lng": -73.15
+  },
+  "workers": [
+    {
+      "id": 1,
+      "name": "Camila Soto",
+      "role": "Conductor",
+      "shift_limit_minutes": 480,
+      "active": 0
+    },
+    {
+      "id": 2,
+      "name": "Tomas Fuentes",
+      "role": "Ayudante",
+      "shift_limit_minutes": 480,
+      "active": 0
+    }
+  ],
+  "orders": [],
+  "markers": [],
+  "customers": [
+    {
+      "id": 1,
+      "name": "Cliente Demo Norte",
+      "email": "compras@norte.cl",
+      "phone": "+56911111111",
+      "address": "Coronel Centro",
+      "active": 1
+    },
+    {
+      "id": 2,
+      "name": "Cliente Demo Sur",
+      "email": "compras@sur.cl",
+      "phone": "+56922222222",
+      "address": "Lota Sur",
+      "active": 1
+    },
+    {
+      "id": 3,
+      "name": "Cliente Prueba",
+      "email": "c@demo.cl",
+      "phone": "+569999",
+      "address": "Lota",
+      "active": 1
+    }
+  ],
+  "invoices": [
+    {
+      "id": 1,
+      "customer_id": 1,
+      "worker_id": null,
+      "saved_route_id": null,
+      "invoice_number": "F-1001",
+      "total_amount": 98000,
+      "status": "pending",
+      "due_date": "2026-03-20",
+      "created_at": "2026-03-20T23:51:29.411Z",
+      "order_codes": []
+    },
+    {
+      "id": 2,
+      "customer_id": 1,
+      "worker_id": null,
+      "saved_route_id": null,
+      "invoice_number": "F-2001",
+      "total_amount": 123000,
+      "status": "pending",
+      "due_date": "",
+      "created_at": "2026-03-20T23:51:36.163Z",
+      "order_codes": []
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Andrea Lopez",
+      "email": "andrea@empresa.cl",
+      "phone": "+56911112222",
+      "preferred_channel": "email",
+      "active": 1
+    },
+    {
+      "id": 2,
+      "name": "Jorge Rivas",
+      "email": "jorge@empresa.cl",
+      "phone": "+56933334444",
+      "preferred_channel": "sms",
+      "active": 1
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "user_name": "Andrea Lopez",
+      "channel": "email",
+      "message": "[Sugerencia ALTA] Prueba sugerencia individual",
+      "status": "sent",
+      "created_at": "2026-03-20T20:01:12.155Z",
+      "delivered_at": "2026-03-20T20:01:12.155Z"
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "user_name": "Jorge Rivas",
+      "channel": "sms",
+      "message": "[Sugerencia ALTA] Prueba sugerencia individual",
+      "status": "sent",
+      "created_at": "2026-03-20T20:01:12.155Z",
+      "delivered_at": "2026-03-20T20:01:12.155Z"
+    },
+    {
+      "id": 3,
+      "user_id": 1,
+      "user_name": "Camila Soto",
+      "channel": "push",
+      "message": "[Sugerencia ALTA] Prueba sugerencia individual",
+      "status": "sent",
+      "created_at": "2026-03-20T20:01:45.887Z",
+      "delivered_at": "2026-03-20T20:01:45.887Z"
+    },
+    {
+      "id": 4,
+      "user_id": 1,
+      "user_name": "Camila Soto",
+      "channel": "push",
+      "message": "[Sugerencia MEDIA] Prueba general",
+      "status": "sent",
+      "created_at": "2026-03-20T20:02:17.794Z",
+      "delivered_at": "2026-03-20T20:02:17.794Z"
+    },
+    {
+      "id": 5,
+      "user_id": 2,
+      "user_name": "Tomas Fuentes",
+      "channel": "push",
+      "message": "[Sugerencia MEDIA] Prueba general",
+      "status": "sent",
+      "created_at": "2026-03-20T20:02:17.794Z",
+      "delivered_at": "2026-03-20T20:02:17.794Z"
+    },
+    {
+      "id": 6,
+      "user_id": 2,
+      "user_name": "Tomas Fuentes",
+      "channel": "push",
+      "message": "[Sugerencia BAJA] tomar ruta alternativa",
+      "status": "sent",
+      "created_at": "2026-03-20T22:44:02.913Z",
+      "delivered_at": "2026-03-20T22:44:02.913Z"
+    }
+  ],
+  "google_route": null,
+  "saved_routes": [],
+  "route_assignments": [],
+  "map_graph": {
+    "nodes": [],
+    "edges": []
+  },
+  "controller_log": []
+}

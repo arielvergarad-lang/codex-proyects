@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeliveryCore | EnRuta Pro</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <a class="skip-link" href="#mainContent">Saltar al contenido principal</a>
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Plataforma operativa para logistica de ultima milla</p>
+          <div class="brand-line" aria-label="Marca DeliveryCore">
+            <span class="brand-logo" aria-hidden="true">
+              <svg viewBox="0 0 64 64" role="img" focusable="false">
+                <defs>
+                  <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#0066ff"/>
+                    <stop offset="100%" stop-color="#1f8a70"/>
+                  </linearGradient>
+                </defs>
+                <rect x="4" y="4" width="56" height="56" rx="16" fill="#0f1725"/>
+                <path d="M16 42 L30 20 L40 34 L48 22" fill="none" stroke="url(#g1)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="16" cy="42" r="4" fill="#efb11d"/>
+                <circle cx="30" cy="20" r="4" fill="#0066ff"/>
+                <circle cx="40" cy="34" r="4" fill="#1f8a70"/>
+                <circle cx="48" cy="22" r="4" fill="#ff6b35"/>
+              </svg>
+            </span>
+            <div>
+              <h1>DeliveryCore</h1>
+              <p class="brand-module">Modulo operativo: EnRuta Pro</p>
+            </div>
+          </div>
+          <p class="hero-copy">
+            Supervisa rutas en tiempo real, estima llegadas, coordina al equipo y toma decisiones con datos claros.
+            Todo en una interfaz pensada para operacion diaria y presentaciones ejecutivas.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <button id="toggleSimulation" class="btn btn-primary">Pausar / Reanudar simulacion</button>
+          <button id="refreshData" class="btn btn-secondary">Actualizar panel</button>
+        </div>
+      </header>
+      <p id="offlineStatus" class="map-help" aria-live="polite">Modo online.</p>
+      <div class="mode-actions">
+        <a class="btn btn-secondary btn-small" href="/?tab=sandbox&mode=sandbox">Abrir Sandbox aparte</a>
+        <a id="backToMainLink" class="btn btn-secondary btn-small" href="/?tab=operacion">Volver al panel principal</a>
+      </div>
+
+      <nav class="tab-nav" role="tablist" aria-label="Secciones principales">
+        <button class="tab-btn is-active" id="tab-operacion" role="tab" aria-selected="true" aria-controls="mainContent" data-tab="operacion">Operacion</button>
+        <button class="tab-btn" id="tab-rutas" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="rutas">Rutas</button>
+        <button class="tab-btn" id="tab-asistente" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="asistente">Asistente</button>
+        <button class="tab-btn" id="tab-controlador" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="controlador">Controlador</button>
+        <button class="tab-btn" id="tab-conductores" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="conductores">Conductores</button>
+        <button class="tab-btn" id="tab-datos" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="datos">Datos</button>
+        <button class="tab-btn" id="tab-clientes" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="clientes">Clientes</button>
+        <button class="tab-btn" id="tab-sandbox" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="sandbox">Sandbox</button>
+        <button class="tab-btn" id="tab-ajustes" role="tab" aria-selected="false" aria-controls="mainContent" data-tab="ajustes">Ajustes</button>
+      </nav>
+      <p id="tabStatus" class="map-help" aria-live="polite">Pestana activa: Operacion.</p>
+      <section class="commercial-strip tab-group" data-tab-group="operacion,rutas,asistente,controlador,conductores,datos,clientes,sandbox,ajustes">
+        <article class="commercial-card">
+          <strong>Operacion mas rapida</strong>
+          <p>Despacho agil con ETA, alertas y priorizacion automatica en una sola pantalla.</p>
+        </article>
+        <article class="commercial-card">
+          <strong>Control para jefatura</strong>
+          <p>Monitoreo del equipo por conductor, decisiones en tiempo real y trazabilidad.</p>
+        </article>
+        <article class="commercial-card">
+          <strong>Escalable a operacion real</strong>
+          <p>Base de datos editable, notificaciones y soporte para rutas con proveedor externo o local.</p>
+        </article>
+      </section>
+      <section class="workflow-strip tab-group" data-tab-group="operacion,rutas,asistente,controlador,conductores,datos,sandbox" aria-label="Flujo recomendado">
+        <article class="workflow-step">
+          <span>Paso 1</span>
+          <strong>Carga pedidos</strong>
+          <p>Datos manuales, JSON o asistente.</p>
+        </article>
+        <article class="workflow-step">
+          <span>Paso 2</span>
+          <strong>Optimiza rutas</strong>
+          <p>Automatica o desde pre-ruta.</p>
+        </article>
+        <article class="workflow-step">
+          <span>Paso 3</span>
+          <strong>Monitorea en vivo</strong>
+          <p>Velocidad, ETA y estado por conductor.</p>
+        </article>
+        <article class="workflow-step">
+          <span>Paso 4</span>
+          <strong>Envia sugerencias</strong>
+          <p>Mensajes al equipo completo o individual.</p>
+        </article>
+      </section>
+
+      <section id="controllerPanel" class="controller-section panel tab-group" data-tab-group="controlador">
+        <div class="panel-heading compact">
+          <div>
+            <p class="panel-kicker">Controlador principal</p>
+            <h2>Centro de decisiones en tiempo real</h2>
+          </div>
+        </div>
+        <p class="section-intro">Visualiza posicion, estado y progreso por conductor. Luego envia instrucciones precisas desde el mismo panel.</p>
+        <div class="controller-layout">
+          <article class="controller-block">
+            <div class="panel-heading compact">
+              <div>
+                <p class="panel-kicker">Monitoreo por conductor</p>
+                <h2>Ubicacion en vivo</h2>
+              </div>
+            </div>
+            <div id="controllerDriversBoard" class="markers-list"></div>
+          </article>
+          <article class="controller-block">
+            <div class="panel-heading compact">
+              <div>
+                <p class="panel-kicker">Bodega principal</p>
+                <h2>Definir punto base</h2>
+              </div>
+            </div>
+            <form id="controllerDepotForm" class="controller-form">
+              <input name="customer" type="text" placeholder="Nombre bodega principal" />
+              <input name="lat" type="number" step="0.000001" placeholder="Latitud" required />
+              <input name="lng" type="number" step="0.000001" placeholder="Longitud" required />
+              <button class="btn btn-secondary btn-small touch-btn" type="submit">Guardar bodega</button>
+            </form>
+            <p id="controllerDepotStatus" class="map-help" aria-live="polite">Bodega actual lista.</p>
+          </article>
+          <article class="controller-block">
+            <div class="panel-heading compact">
+              <div>
+                <p class="panel-kicker">Comando operativo</p>
+                <h2>Enviar sugerencias</h2>
+              </div>
+            </div>
+            <form id="controllerSuggestionForm" class="controller-form" aria-label="Enviar sugerencia operativa">
+              <label for="controllerTargetWorker">Destino</label>
+              <select id="controllerTargetWorker" name="worker_id">
+                <option value="all">Todos los conductores activos</option>
+              </select>
+              <label for="controllerMessage">Mensaje</label>
+              <textarea id="controllerMessage" name="message" rows="3" placeholder="Ejemplo: Evitar acceso sur, usar via costera por menor congestion."></textarea>
+              <label for="controllerPriority">Prioridad</label>
+              <select id="controllerPriority" name="priority">
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="baja">Baja</option>
+              </select>
+              <button id="sendControllerSuggestion" class="btn btn-primary" type="submit">Enviar sugerencia</button>
+            </form>
+          </article>
+          <article class="controller-block">
+            <div class="panel-heading compact">
+              <div>
+                <p class="panel-kicker">Pre-rutas rapidas</p>
+                <h2>Crear pre-ruta desde Controlador</h2>
+              </div>
+            </div>
+            <p class="map-help">Toca pedidos para definir orden de visita y aplicar al instante.</p>
+            <div id="controllerPreRouteList" class="route-plan-list"></div>
+            <input id="controllerPreRouteCodes" type="text" readonly placeholder="Aun no hay pre-ruta" />
+            <div class="route-actions">
+              <button id="controllerApplyPreRouteBtn" class="btn btn-secondary btn-small touch-btn" type="button">Aplicar pre-ruta</button>
+              <button id="controllerOptimizePreRouteBtn" class="btn btn-primary btn-small touch-btn" type="button">Optimizar desde pre-ruta</button>
+              <button id="controllerClearPreRouteBtn" class="btn btn-secondary btn-small touch-btn" type="button">Limpiar</button>
+            </div>
+            <p id="controllerPreRouteStatus" class="map-help" aria-live="polite">Lista para planificar.</p>
+          </article>
+          <article class="controller-block">
+            <div class="panel-heading compact">
+              <div>
+                <p class="panel-kicker">Bitacora</p>
+                <h2>Historial de instrucciones</h2>
+              </div>
+            </div>
+            <div id="controllerLog" class="markers-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="settingsPanel" class="controller-section panel tab-group" data-tab-group="ajustes">
+        <div class="panel-heading compact">
+          <div>
+            <p class="panel-kicker">Ajustes</p>
+            <h2>Personalizacion y modo de trabajo</h2>
+          </div>
+        </div>
+        <div class="settings-grid">
+          <label class="control-card">
+            <span>Nombre del operador</span>
+            <input id="prefsOperatorName" type="text" placeholder="Ej: Fernando" />
+          </label>
+          <label class="control-card">
+            <span>Nombre de empresa</span>
+            <input id="prefsCompanyName" type="text" placeholder="Ej: Logistica Sur" />
+          </label>
+          <label class="control-card">
+            <span>Modo esencial</span>
+            <select id="prefsSimpleMode">
+              <option value="on">Activado (recomendado)</option>
+              <option value="off">Desactivado</option>
+            </select>
+          </label>
+          <label class="control-card">
+            <span>Mostrar secciones complejas</span>
+            <select id="prefsShowAdvanced">
+              <option value="off">Ocultar</option>
+              <option value="on">Mostrar</option>
+            </select>
+          </label>
+          <label class="control-card">
+            <span>Tamano de texto</span>
+            <select id="prefsFontScale">
+              <option value="95">Compacto</option>
+              <option value="100">Normal</option>
+              <option value="110">Grande</option>
+              <option value="120">Muy grande</option>
+            </select>
+          </label>
+          <label class="control-card">
+            <span>Tema visual</span>
+            <select id="prefsTheme">
+              <option value="default">Clasico</option>
+              <option value="high-contrast">Alto contraste</option>
+              <option value="colorblind">Amigable daltonismo</option>
+            </select>
+          </label>
+        </div>
+        <div class="hero-actions">
+          <button id="savePrefsBtn" class="btn btn-primary btn-small touch-btn" type="button">Guardar personalizacion</button>
+          <button id="resetPrefsBtn" class="btn btn-secondary btn-small touch-btn" type="button">Restaurar por defecto</button>
+        </div>
+        <p id="prefsStatus" class="map-help" aria-live="polite">Configura tu experiencia y guarda los cambios.</p>
+        <details class="advanced-block">
+          <summary>Guia rapida e instrucciones (ocultas por defecto)</summary>
+          <p>Operacion: ver estado de rutas y conductores.</p>
+          <p>Rutas: optimizar y asignar rutas pre-hechas.</p>
+          <p>Controlador: enviar sugerencias por conductor.</p>
+          <p>Datos/Sandbox/Asistente: secciones avanzadas para administracion y pruebas.</p>
+        </details>
+      </section>
+
+      <section id="dbPanel" class="controller-section panel tab-group" data-tab-group="datos">
+        <div class="panel-heading compact">
+          <div>
+            <p class="panel-kicker">Base de datos</p>
+            <h2>Administrador BD (prototipo)</h2>
+          </div>
+        </div>
+        <div class="worker-grid">
+          <div class="worker-card">
+            <span>Pedidos</span>
+            <strong id="dbOrdersCount">0</strong>
+          </div>
+          <div class="worker-card">
+            <span>Conductores</span>
+            <strong id="dbWorkersCount">0</strong>
+          </div>
+          <div class="worker-card">
+            <span>Usuarios</span>
+            <strong id="dbUsersCount">0</strong>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button id="dbExportBtn" class="btn btn-secondary touch-btn">Exportar BD</button>
+          <button id="dbImportBtn" class="btn btn-secondary touch-btn">Importar BD</button>
+          <button id="dbResetBtn" class="btn btn-secondary touch-btn">Reset demo</button>
+        </div>
+        <textarea id="dbJsonEditor" rows="8" class="db-json" placeholder='Pega aqui {"db": {...}} para importar'></textarea>
+        <p id="dbStatus" class="map-help" aria-live="polite">Listo para administrar la base de datos del prototipo.</p>
+      </section>
+
+      <section class="admin-grid tab-group" data-tab-group="conductores">
+        <article class="panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Equipo</p>
+              <h2>Agregar y gestionar conductores</h2>
+            </div>
+          </div>
+          <p class="section-intro">Usa este panel para crear conductores nuevos, ajustar sus turnos y asignarles rutas pre-hechas.</p>
+          <form id="workerForm" class="admin-form worker-form">
+            <input name="name" type="text" placeholder="Nombre del conductor" required />
+            <input name="role" type="text" placeholder="Rol (ej: Conductor principal)" />
+            <input name="shift_limit_minutes" type="number" min="120" max="900" value="480" placeholder="Limite de turno en minutos" />
+            <button class="btn btn-primary btn-small" type="submit">Agregar conductor</button>
+          </form>
+          <p id="shiftLimitHelp" class="map-help">Limite de turno: 08h 00m (tiempo maximo recomendado antes de sobretiempo).</p>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Limite turno</th>
+                  <th>Activo</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="workersTableBody"></tbody>
+            </table>
+          </div>
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Asignacion de rutas</p>
+              <h2>Rutas pre-hechas por conductor</h2>
+            </div>
+          </div>
+          <form id="routeAssignForm" class="admin-form">
+            <select id="assignWorkerSelect" name="worker_id"></select>
+            <select id="assignSavedRouteSelect" name="saved_route_id"></select>
+            <input id="assignNoteInput" name="note" type="text" placeholder="Nota opcional (ej: turno manana)" />
+            <button class="btn btn-secondary btn-small" type="submit">Asignar ruta</button>
+          </form>
+          <div id="routeAssignmentsList" class="markers-list"></div>
+        </article>
+      </section>
+
+      <section class="panel tab-group route-panel" data-tab-group="rutas">
+        <div class="panel-heading compact">
+          <div>
+            <p class="panel-kicker">Centro de rutas</p>
+            <h2>Optimizar y asignar rutas</h2>
+          </div>
+        </div>
+        <p class="section-intro ui-help">Hazlo en 3 pasos: 1) marca orden de visita, 2) optimiza, 3) asigna ruta al conductor.</p>
+        <div class="workflow-strip route-workflow">
+          <article class="workflow-step">
+            <span>Paso 1</span>
+            <strong>Elige paradas</strong>
+            <p>Toca pedidos para armar un orden inicial.</p>
+          </article>
+          <article class="workflow-step">
+            <span>Paso 2</span>
+            <strong>Optimiza</strong>
+            <p>Usa el boton recomendado y ajusta si hace falta.</p>
+          </article>
+          <article class="workflow-step">
+            <span>Paso 3</span>
+            <strong>Asigna conductor</strong>
+            <p>Guarda ruta y asignala de forma directa.</p>
+          </article>
+        </div>
+        <div class="route-preplan advanced-only">
+          <p class="map-help ui-help">Marca paradas en el orden que quieres visitar. Luego optimiza desde esa pre-ruta.</p>
+          <div id="routePlanList" class="route-plan-list"></div>
+          <label class="control-card">
+            <span>Pre-ruta seleccionada</span>
+            <input id="routePlanCodes" type="text" readonly placeholder="Aun no marcas paradas" />
+          </label>
+          <div class="route-actions">
+            <button id="applyPreRouteBtn" class="btn btn-secondary touch-btn" type="button">Aplicar pre-ruta</button>
+            <button id="optimizeFromPreRouteBtn" class="btn btn-primary touch-btn" type="button">Optimizar desde pre-ruta</button>
+            <button id="clearPreRouteBtn" class="btn btn-secondary touch-btn" type="button">Limpiar pre-ruta</button>
+          </div>
+        </div>
+        <div class="route-actions">
+          <button id="optimizeSmartRoute" class="btn btn-primary touch-btn">Optimizar ahora (recomendado)</button>
+          <button id="clearOperationsBtn" class="btn btn-secondary touch-btn" type="button">Limpiar mapa y pedidos (empezar de 0)</button>
+        </div>
+        <div class="route-actions advanced-only">
+          <button id="optimizeRoute" class="btn btn-primary touch-btn">Optimizar ruta sugerida</button>
+          <button id="googleRouteBtn" class="btn btn-secondary touch-btn">Calcular con Google</button>
+          <button id="dbRouteBtn" class="btn btn-secondary touch-btn">Calcular con mapa local</button>
+          <button id="saveOfflineBtn" class="btn btn-secondary touch-btn">Guardar para uso sin internet</button>
+          <button id="loadOfflineBtn" class="btn btn-secondary touch-btn">Cargar ultima ruta guardada</button>
+        </div>
+        <p class="map-help ui-help advanced-only">Paso recomendado: optimiza la ruta, revisa el resultado y luego guardala offline.</p>
+        <article class="panel route-assign-quick">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Asignacion clara</p>
+              <h2>Asignar ruta pre-hecha a conductor</h2>
+            </div>
+          </div>
+          <p class="section-intro">1) Toca un conductor. 2) Toca una ruta pre-hecha y se asigna al instante.</p>
+          <div class="route-quick-grid">
+            <div>
+              <p class="map-help">Conductores:</p>
+              <div id="routeQuickWorkerChips" class="route-chip-grid"></div>
+            </div>
+            <div>
+              <p class="map-help">Rutas pre-hechas:</p>
+              <div id="routeQuickRouteCards" class="route-chip-grid"></div>
+            </div>
+          </div>
+          <p class="map-help">Pedidos mas rentables por tiempo (sugeridos por color de conductor):</p>
+          <div id="routeQuickRentableList" class="markers-list"></div>
+          <p id="routeQuickAssignStatus" class="map-help" aria-live="polite">Sin cambios recientes.</p>
+          <div id="routeQuickAssignmentsList" class="markers-list"></div>
+        </article>
+      </section>
+
+      <section class="panel tab-group route-panel advanced-tab-panel" data-tab-group="asistente">
+        <div class="panel-heading compact">
+          <div>
+            <p class="panel-kicker">Asistente de rutas</p>
+            <h2>Describe tu recorrido y lo armamos por ti</h2>
+          </div>
+        </div>
+        <p class="section-intro">Escribe como hablas normalmente. El asistente interpreta tu texto y propone el orden de paradas.</p>
+        <div id="routeChatFeed" class="route-chat-feed">
+          <article class="route-chat-msg assistant">
+            <strong>Asistente</strong>
+            <p>Ejemplo: "Primero entrega en Pedido C, luego B y termina en A".</p>
+          </article>
+        </div>
+        <form id="routeChatForm" class="route-chat-form">
+          <label for="routeChatInput">Escribe tu ruta en lenguaje normal</label>
+          <textarea id="routeChatInput" rows="3" placeholder="Ejemplo: salgo del centro, voy a B-220, luego C-102 y termino en A-301"></textarea>
+          <div class="route-actions">
+            <button class="btn btn-primary touch-btn" type="submit">Entender y proponer ruta</button>
+            <button id="routeChatApplyBtn" class="btn btn-secondary touch-btn" type="button">Aplicar ruta propuesta</button>
+          </div>
+        </form>
+        <p id="routeChatStatus" class="map-help" aria-live="polite">Aun no hay ruta propuesta por el asistente.</p>
+      </section>
+
+      <main id="mainContent">
+      <section class="top-grid tab-group" data-tab-group="operacion">
+        <article class="metric-card">
+          <span>ETA actual</span>
+          <strong id="etaMetric">42 min</strong>
+          <small id="etaDelta">-12% vs plan base</small>
+        </article>
+        <article class="metric-card">
+          <span>Entregas a tiempo</span>
+          <strong id="ontimeMetric">87%</strong>
+          <small id="ontimeDelta">2 de 3 entregas siguientes bajo umbral</small>
+        </article>
+        <article class="metric-card metric-optional">
+          <span>Uso del conductor</span>
+          <strong id="workerMetric">71%</strong>
+          <small id="workerDelta">Conduccion, detenciones y pausas</small>
+        </article>
+        <article class="metric-card accent">
+          <span>Ahorro estimado</span>
+          <strong id="savingsMetric">18 min</strong>
+          <small id="savingsDelta">Si aplicas sugerencias activas</small>
+        </article>
+      </section>
+
+      <section class="dashboard tab-group" data-tab-group="operacion">
+        <section class="panel map-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">Centro de control</p>
+              <h2>Ruta en tiempo real</h2>
+            </div>
+            <div class="legend">
+              <span><i class="dot depot"></i>Deposito</span>
+              <span><i class="dot stop"></i>Paradas</span>
+              <span><i class="dot van"></i>Vehiculo</span>
+              <span><i class="dot marker"></i>Marcadores</span>
+            </div>
+          </div>
+          <p class="section-intro">Vista operativa principal. Puedes seguir la ruta, ver proxima parada y actuar frente a desvíos.</p>
+
+          <div id="mapBoard" class="map-board" aria-label="Mapa real de rutas">
+            <iframe
+              id="googleMapFrame"
+              title="Vista Google Maps"
+              class="google-map-frame"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              hidden
+            ></iframe>
+            <div class="map-overlay">
+              <div>
+                <span>Ruta activa</span>
+                <strong id="activeRouteLabel">Centro -> Norte -> Este</strong>
+              </div>
+              <div>
+                <span>Velocidad simulada</span>
+                <strong id="speedLabel">31 km/h</strong>
+              </div>
+              <div>
+                <span>Parada siguiente</span>
+                <strong id="nextStopLabel">Pedido C-102</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="operation-readout">
+            <article class="readout-chip">
+              <span>Modo de control</span>
+              <strong>Operativo en vivo</strong>
+            </article>
+            <article class="readout-chip">
+              <span>Velocidad real</span>
+              <strong id="liveSpeedBadge">31 km/h</strong>
+            </article>
+            <article class="readout-chip">
+              <span>Ajustes avanzados</span>
+              <strong>Disponible en Sandbox</strong>
+            </article>
+          </div>
+          <p class="map-help">
+            Haz clic sobre el mapa para marcar ubicaciones y mejorar la estrategia de la ruta.
+          </p>
+          <p id="mapModeHint" class="map-help" aria-live="polite">Mapa operativo con OpenStreetMap.</p>
+        </section>
+
+        <section class="side-column">
+          <article class="panel">
+            <div class="panel-heading compact">
+              <div>
+                <p class="panel-kicker">Secuencia operativa</p>
+                <h2>Paradas por conductor</h2>
+              </div>
+            </div>
+            <p class="section-intro">Toca cada conductor para ver pedidos pendientes, completados, tiempo de completado y ahorro potencial.</p>
+            <div id="stopsList" class="stops-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading compact">
+              <div>
+                <p class="panel-kicker">Motor de decisiones</p>
+                <h2>Sugerencias</h2>
+              </div>
+              <button id="getAiSuggestion" class="btn btn-secondary btn-small touch-btn">Sugerencia IA</button>
+            </div>
+            <div id="suggestionsList" class="suggestions-list"></div>
+            <article class="suggestion-item ai-box">
+              <strong>Asistente IA</strong>
+              <p id="aiSuggestionText">Usa el boton para pedir recomendaciones con API.</p>
+            </article>
+          </article>
+        </section>
+      </section>
+
+      <section class="bottom-grid tab-group" data-tab-group="operacion">
+        <article class="panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Productividad del equipo</p>
+              <h2>Control de jornada</h2>
+            </div>
+          </div>
+          <div class="worker-grid">
+            <div class="worker-card">
+              <span>Conductor</span>
+              <strong id="workerName">Camila Soto</strong>
+              <small id="workerStatus">Turno en curso</small>
+            </div>
+            <div class="worker-card">
+              <span>Tiempo trabajado</span>
+              <strong id="shiftWorked">05h 20m</strong>
+              <small id="shiftRisk">Riesgo bajo de sobretiempo</small>
+            </div>
+            <div class="worker-card">
+              <span>Conduccion continua</span>
+              <strong id="continuousDrive">01h 35m</strong>
+              <small id="breakHint">Pausa sugerida en 25 min</small>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Marcadores estrategicos</p>
+              <h2>Ubicaciones detectadas</h2>
+            </div>
+          </div>
+          <div id="markersList" class="markers-list"></div>
+        </article>
+
+        <article class="panel metric-optional">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Rendimiento global y control</p>
+              <h2>Eficiencia</h2>
+            </div>
+          </div>
+          <div class="efficiency-stack">
+            <div class="efficiency-row">
+              <span>Costo por entrega</span>
+              <strong id="costMetric">$2.8</strong>
+            </div>
+            <div class="efficiency-row">
+              <span>Distancia restante</span>
+              <strong id="distanceMetric">14.6 km</strong>
+            </div>
+            <div class="efficiency-row">
+              <span>Desvios evitables</span>
+              <strong id="detourMetric">3</strong>
+            </div>
+            <div class="efficiency-row">
+              <span>Capacidad utilizada</span>
+              <strong id="capacityMetric">76%</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="admin-grid tab-group advanced-tab-panel" data-tab-group="datos,sandbox">
+        <article class="panel tab-group" data-tab-group="datos">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Datos del dia</p>
+              <h2>Pedidos (facil)</h2>
+            </div>
+          </div>
+          <p class="section-intro">Aqui agregas pedidos nuevos. Escribe cliente, ubicacion y a quien asignarlo.</p>
+          <form id="orderForm" class="admin-form">
+            <input name="code" type="text" placeholder="Codigo interno (opcional)" />
+            <input name="customer" type="text" placeholder="Nombre del cliente o referencia" required />
+            <input name="x" type="number" min="2" max="98" step="0.1" placeholder="Posicion X del mapa (2-98)" required />
+            <input name="y" type="number" min="2" max="98" step="0.1" placeholder="Posicion Y del mapa (2-98)" required />
+            <input name="service_minutes" type="number" min="1" max="50" placeholder="Minutos estimados de entrega" />
+            <input name="demand" type="number" min="1" max="100" placeholder="Carga del pedido (1-100)" />
+            <select id="orderCustomerSelect" name="customer_id">
+              <option value="">Sin cliente vinculado</option>
+            </select>
+            <select id="orderWorkerSelect" name="worker_id">
+              <option value="">Sin conductor asignado</option>
+            </select>
+            <select name="priority">
+              <option value="0">Prioridad normal</option>
+              <option value="1">Alta prioridad</option>
+            </select>
+            <button class="btn btn-primary btn-small" type="submit">Agregar pedido</button>
+          </form>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Codigo</th>
+                  <th>Conductor</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel tab-group" data-tab-group="datos">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Comunicacion</p>
+              <h2>Usuarios y avisos</h2>
+            </div>
+          </div>
+          <p class="section-intro">Guarda a quien notificar y envia avisos operativos en segundos.</p>
+
+          <form id="userForm" class="admin-form">
+            <input name="name" type="text" placeholder="Nombre usuario" required />
+            <input name="email" type="email" placeholder="Correo" />
+            <input name="phone" type="text" placeholder="Telefono" />
+            <select name="preferred_channel">
+              <option value="email">Canal: Email</option>
+              <option value="sms">Canal: SMS</option>
+              <option value="push">Canal: Push</option>
+            </select>
+            <button class="btn btn-primary btn-small" type="submit">Guardar usuario</button>
+          </form>
+
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Canal</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+
+          <form id="notificationForm" class="admin-form notification-form">
+            <select name="recipient" id="recipientSelect">
+              <option value="all">Todos los usuarios activos</option>
+            </select>
+            <select name="channel">
+              <option value="auto">Canal automatico</option>
+              <option value="email">Email</option>
+              <option value="sms">SMS</option>
+              <option value="push">Push</option>
+            </select>
+            <input name="message" type="text" placeholder="Mensaje de notificacion" required />
+            <button class="btn btn-secondary btn-small" type="submit">Enviar notificacion</button>
+          </form>
+
+          <div id="notificationsFeed" class="markers-list"></div>
+        </article>
+
+        <article class="panel tab-group" data-tab-group="sandbox">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Prueba guiada</p>
+              <h2>Ajustes rapidos (sin programar)</h2>
+            </div>
+          </div>
+          <p class="section-intro">Configura condiciones de prueba en segundos para simular distintos escenarios de entrega.</p>
+          <div class="preset-row">
+            <button id="presetEasy" type="button" class="btn btn-secondary btn-small touch-btn">Dia tranquilo</button>
+            <button id="presetNormal" type="button" class="btn btn-secondary btn-small touch-btn">Dia normal</button>
+            <button id="presetHard" type="button" class="btn btn-secondary btn-small touch-btn">Dia complejo</button>
+          </div>
+          <div class="controls-grid sandbox-controls">
+            <label class="control-card">
+              <span>Tipo de recorrido</span>
+              <select id="scenarioSelect">
+                <option value="urban">Ciudad con muchas paradas</option>
+                <option value="mixed">Mixto (ciudad + tramos largos)</option>
+                <option value="express">Entrega rapida prioritaria</option>
+              </select>
+              <small>Define el estilo general de entrega.</small>
+            </label>
+            <label class="control-card">
+              <span>Trafico en la calle <strong id="trafficValue">48%</strong></span>
+              <input id="trafficRange" type="range" min="0" max="100" value="48" />
+              <small>0% = despejado, 100% = muy congestionado.</small>
+            </label>
+            <label class="control-card">
+              <span>Estado del clima <strong id="weatherValue">22%</strong></span>
+              <input id="weatherRange" type="range" min="0" max="100" value="22" />
+              <small>0% = ideal, 100% = clima complicado.</small>
+            </label>
+            <label class="control-card">
+              <span>Marca en mapa al tocar</span>
+              <select id="markerType">
+                <option value="hotspot">Congestion</option>
+                <option value="priority">Punto prioritario</option>
+                <option value="unsafe">Zona de riesgo</option>
+              </select>
+              <small>Elige que tipo de punto agregaras en el mapa.</small>
+            </label>
+            <label class="control-card">
+              <span>Vista del mapa</span>
+              <select id="mapModeSelect">
+                <option value="leaflet">OpenStreetMap (operativo)</option>
+                <option value="google">Google Maps (comercial)</option>
+              </select>
+              <small>Puedes cambiar entre vista tecnica y comercial.</small>
+            </label>
+            <label class="control-card">
+              <span>Velocidad de simulacion <strong id="simSpeedValue">1.0x</strong></span>
+              <input id="simSpeedRange" type="range" min="0.5" max="3" step="0.1" value="1" />
+              <small>Sube para ver resultados mas rapido.</small>
+            </label>
+            <label class="control-card">
+              <span>Velocidad de vehiculos <strong id="vehicleSpeedValue">31 km/h</strong></span>
+              <input id="vehicleSpeedRange" type="range" min="8" max="80" step="1" value="31" />
+              <small>Controla la velocidad base de toda la flota en esta simulacion.</small>
+            </label>
+          </div>
+          <p class="map-help">Cambia estos controles y veras al instante el efecto en ETA y velocidad.</p>
+          <p id="liveSpeedStatus" class="map-help" aria-live="polite">Velocidad actual: 31 km/h.</p>
+        </article>
+
+        <article class="panel tab-group" data-tab-group="sandbox">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Prueba con tus datos</p>
+              <h2>Pedidos y orden de visita</h2>
+            </div>
+          </div>
+          <p class="section-intro">Puedes cargar datos en lenguaje natural, formato simple por lineas o JSON avanzado.</p>
+          <label for="sandboxTextInput">Asistente rapido: describe en palabras tus puntos de entrega</label>
+          <textarea id="sandboxTextInput" rows="4" placeholder="Ejemplo: 15 pedidos saliendo de Coronel, luego Lota, Curanilahue y termino en Lebu."></textarea>
+          <div class="preset-row">
+            <button id="sandboxGenerateBtn" type="button" class="btn btn-primary btn-small touch-btn">Generar puntos automaticos</button>
+            <button id="sandboxClearRouteBtn" type="button" class="btn btn-secondary btn-small touch-btn">Limpiar conexion de puntos</button>
+          </div>
+          <p id="sandboxAutoStatus" class="map-help" aria-live="polite">Escribe una descripcion y genera puntos automaticamente.</p>
+          <div class="preset-row">
+            <button id="loadSimpleExample" type="button" class="btn btn-secondary btn-small touch-btn">Cargar ejemplo simple</button>
+            <button id="clearSandboxData" type="button" class="btn btn-secondary btn-small touch-btn">Limpiar campos</button>
+          </div>
+          <div>
+            <p class="map-help">Conecta puntos en orden con clic para armar la ruta:</p>
+            <div id="sandboxRouteBuilder" class="route-plan-list"></div>
+            <input id="sandboxRoutePreview" type="text" readonly placeholder="Ruta conectada: aun vacia" />
+          </div>
+          <form id="testRunForm" class="test-form">
+            <label for="simpleStopsInput">1) Escribe una parada por linea: <code>CODIGO, Cliente, LAT, LNG</code></label>
+            <textarea id="simpleStopsInput" rows="7" placeholder="Ejemplo:
+A-001, Cliente Centro, -33.452, -70.640
+A-002, Cliente Norte, -33.433, -70.610
+A-003, Cliente Sur, -33.490, -70.660"></textarea>
+            <label for="simpleRouteOrderInput">2) Orden de visita (opcional), solo codigos separados por coma</label>
+            <input id="simpleRouteOrderInput" type="text" placeholder="Ejemplo: A-001,A-003,A-002" />
+            <details class="advanced-block">
+              <summary>Modo avanzado (JSON)</summary>
+              <label for="testOrdersJson">Si prefieres, tambien puedes usar JSON</label>
+              <textarea id="testOrdersJson" name="orders_json" rows="9">
+[
+  { "code": "X-101", "customer": "Cliente Norte", "lat": -33.433, "lng": -70.61, "service_minutes": 6, "demand": 12, "priority": 1 },
+  { "code": "X-102", "customer": "Cliente Centro", "lat": -33.452, "lng": -70.64, "service_minutes": 8, "demand": 9, "priority": 0 },
+  { "code": "X-103", "customer": "Cliente Sur", "lat": -33.49, "lng": -70.66, "service_minutes": 7, "demand": 14, "priority": 0 }
+]
+              </textarea>
+              <label for="testRouteInput">Orden manual desde JSON (opcional)</label>
+              <input id="testRouteInput" name="route_codes" type="text" placeholder="Ejemplo: X-101,X-102,X-103" />
+            </details>
+            <label for="testDepotLat">3) Punto de inicio (opcional)</label>
+            <input id="testDepotLat" name="depot_lat" type="number" step="0.000001" placeholder="Lat deposito (opcional)" />
+            <input id="testDepotLng" name="depot_lng" type="number" step="0.000001" placeholder="Lng deposito (opcional)" />
+            <button class="btn btn-primary btn-small" type="submit">Aplicar prueba ahora</button>
+          </form>
+          <p id="testRunStatus" class="map-help" aria-live="polite">Tip: usa el formato por linea para cargar datos rapido sin JSON.</p>
+        </article>
+
+        <article class="panel tab-group" data-tab-group="sandbox">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Editor simple de mapa</p>
+              <h2>Puntos de ruta (modo facil)</h2>
+            </div>
+          </div>
+          <p class="map-help">Primero agrega puntos escribiendo calles o direcciones. Luego conecta origen y destino con dos clics.</p>
+          <form id="graphNodeForm" class="admin-form">
+            <input name="street" type="text" placeholder="Calle o direccion (ej: Arturo Prat 450)" required />
+            <input name="area" type="text" placeholder="Comuna o ciudad (ej: Coronel)" required />
+            <button class="btn btn-primary btn-small touch-btn" type="submit">Buscar y agregar punto</button>
+          </form>
+          <form id="graphEdgeForm" class="admin-form">
+            <select id="edgeFrom" name="from" aria-label="Punto origen"></select>
+            <select id="edgeTo" name="to" aria-label="Punto destino"></select>
+            <button class="btn btn-secondary btn-small touch-btn" type="submit">Conectar puntos</button>
+            <button id="refreshGraphBtn" class="btn btn-secondary btn-small touch-btn" type="button">Actualizar lista</button>
+          </form>
+          <label class="control-card">
+            <span>Toque en mapa</span>
+            <select id="mapTapMode">
+              <option value="marker">Agregar marcador normal</option>
+              <option value="graph">Agregar punto de ruta</option>
+            </select>
+          </label>
+          <p id="graphStatus" class="map-help" aria-live="polite">Editor listo. Agrega puntos y conectalos facilmente.</p>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Punto</th>
+                  <th>Coordenadas</th>
+                  <th>Accion</th>
+                </tr>
+              </thead>
+              <tbody id="graphNodesBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="admin-grid tab-group" data-tab-group="clientes">
+        <article class="panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Clientes</p>
+              <h2>Agregar y gestionar clientes</h2>
+            </div>
+          </div>
+          <form id="customerForm" class="admin-form">
+            <input name="name" type="text" placeholder="Nombre cliente" required />
+            <input name="email" type="email" placeholder="Correo" />
+            <input name="phone" type="text" placeholder="Telefono" />
+            <input name="address" type="text" placeholder="Direccion o zona" />
+            <button class="btn btn-primary btn-small" type="submit">Guardar cliente</button>
+          </form>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Cliente</th>
+                  <th>Contacto</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="customersTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Facturas</p>
+              <h2>Facturas con responsable y ruta</h2>
+            </div>
+          </div>
+          <p class="section-intro">1) Elige cliente. 2) Define quien entrega. 3) Selecciona ruta planificada. 4) Guarda la factura.</p>
+          <form id="invoiceForm" class="admin-form">
+            <select id="invoiceCustomerSelect" name="customer_id" required></select>
+            <select id="invoiceWorkerSelect" name="worker_id">
+              <option value="">Conductor responsable (opcional)</option>
+            </select>
+            <select id="invoiceRouteSelect" name="saved_route_id">
+              <option value="">Ruta planificada (opcional)</option>
+            </select>
+            <input name="invoice_number" type="text" placeholder="Numero factura" required />
+            <input name="total_amount" type="number" min="0" step="1" placeholder="Monto total" required />
+            <input name="due_date" type="date" />
+            <select name="status">
+              <option value="pending">Pendiente</option>
+              <option value="paid">Pagada</option>
+              <option value="overdue">Vencida</option>
+            </select>
+            <input name="order_codes" type="text" placeholder="Codigos pedido (ej: A-101,B-202)" />
+            <button id="invoiceAutoOrdersBtn" class="btn btn-secondary btn-small" type="button">Cargar pedidos pendientes del cliente</button>
+            <button class="btn btn-primary btn-small" type="submit">Guardar factura</button>
+          </form>
+          <p id="invoiceAssignHint" class="map-help" aria-live="polite">Selecciona conductor y ruta para dejar planificada la entrega.</p>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Factura</th>
+                  <th>Cliente</th>
+                  <th>Conductor</th>
+                  <th>Ruta</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="invoicesTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="panel-kicker">Tiempo real</p>
+              <h2>Pedidos y deuda por cliente</h2>
+            </div>
+          </div>
+          <div id="customerRealtimeList" class="markers-list"></div>
+        </article>
+      </section>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

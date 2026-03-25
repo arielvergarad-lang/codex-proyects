@@ -1,0 +1,18 @@
+{
+  "name": "codex-proyects",
+  "version": "1.0.0",
+  "description": "Pretotipo web de una aplicacion de optimizacion de rutas para logistica y entregas.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "python:venv": "python3 -m venv .venv",
+    "python:install": ".venv/bin/pip install -r python_service/requirements.txt",
+    "python:dev": ".venv/bin/python -m uvicorn python_service.main:app --host 0.0.0.0 --port 8001 --reload",
+    "python:start": ".venv/bin/python -m uvicorn python_service.main:app --host 0.0.0.0 --port 8001",
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
